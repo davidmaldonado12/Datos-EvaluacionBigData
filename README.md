@@ -6,7 +6,10 @@ Capa Bronze: Ingesta y conversión a Parquet de archivos .csv, .txt y .sql (incl
 Capa Silver: Unificación de datos (Joins), normalización de texto, estandarización de fechas y manejo de nulos.
 Carga: Escritura del resultado consolidado en la carpeta silver.
 
-=================================================================================================================
+===========================================================================
+
+<img width="1295" height="682" alt="image" src="https://github.com/user-attachments/assets/95fff1af-71a7-4a2c-8675-2987ca0b5550" />
+
 Descripción del Workflow del Archivo etl_lidl_team_a.py
 
 Este script de Python implementa un proceso ETL (Extracción, Transformación y Carga) utilizando PySpark, diseñado específicamente para ejecutarse en un entorno Windows. A continuación se describe el flujo de trabajo paso a paso:
