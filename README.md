@@ -65,6 +65,8 @@ Este script de Python implementa un proceso ETL (Extracción, Transformación y 
    - El script finaliza mostrando una muestra de 5 registros y el esquema de los datos procesados para verificación.
 
 ===========================================================================
-Kanban Azure
+
+Kanban Azure -> 
+
 <img width="708" height="760" alt="image" src="https://github.com/user-attachments/assets/32e7144f-22e9-402e-9e71-93e0318d8ed2" />
 
