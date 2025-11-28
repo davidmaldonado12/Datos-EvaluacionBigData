@@ -1,0 +1,62 @@
+El archivo cubre las siguientes etapas identificadas en el código:
+   
+Configuración del Entorno: Ajustes específicos para Java y Hadoop en Windows.
+Extracción: Clonación de datos desde GitHub o uso local.
+Capa Bronze: Ingesta y conversión a Parquet de archivos .csv, .txt y .sql (incluyendo el workaround para SQL).
+Capa Silver: Unificación de datos (Joins), normalización de texto, estandarización de fechas y manejo de nulos.
+Carga: Escritura del resultado consolidado en la carpeta silver.
+
+=================================================================================================================
+Descripción del Workflow del Archivo etl_lidl_team_a.py
+
+Este script de Python implementa un proceso ETL (Extracción, Transformación y Carga) utilizando PySpark, diseñado específicamente para ejecutarse en un entorno Windows. A continuación se describe el flujo de trabajo paso a paso:
+
+1. Configuración del Entorno (Windows)
+   - Configura las variables de entorno para Java 17 (JAVA_HOME) y Hadoop (HADOOP_HOME), esenciales para que PySpark funcione correctamente en Windows.
+   - Establece `PYSPARK_PYTHON_WORKER_REUSE` en "0" para evitar errores de sockets (WinError 10038) comunes en versiones recientes de Python en Windows.
+   - Inicializa una `SparkSession` local llamada "Lidl_ETL_Team_A".
+
+2. Adquisición de Datos (Extracción)
+   - Verifica la existencia de un repositorio de datos (`lidl_project_source`).
+   - Si no existe, intenta clonar el repositorio desde GitHub (`https://github.com/pconstancioteacher/lidl_project.git`).
+   - Si la clonación falla, utiliza el directorio local actual como fuente de datos de respaldo.
+
+3. Capa Bronze (Ingesta de Datos Crudos)
+   El script procesa tres tipos de archivos fuente y los convierte a formato Parquet (almacenados en `bronze/ventas/`):
+   
+   a. CSV (`clientes_info.csv`):
+      - Se lee utilizando la opción de cabeceras.
+      - Se guarda directamente en formato Parquet en `bronze/ventas/clientes_info`.
+   
+   b. TXT (`clientes_extra.txt`):
+      - Se lee como un archivo CSV sin cabecera.
+      - Se aplica un esquema manual (`codigo_cliente`, `canal_registro`, `codigo_interno`, `fecha_registro`).
+      - Se guarda en formato Parquet en `bronze/ventas/clientes_extra`.
+   
+   c. SQL (`clientes.sql`):
+      - Se lee el archivo de texto línea por línea.
+      - Se utiliza expresiones regulares (Regex) para extraer los valores dentro de las sentencias `INSERT INTO ... VALUES (...)`.
+      - Workaround Windows: Los datos extraídos se escriben primero en un CSV temporal (`temp_clientes_sql.csv`) para evitar errores de creación de DataFrames en memoria con PySpark en Windows.
+      - Spark lee este CSV temporal y lo guarda finalmente como Parquet en `bronze/ventas/clientes_sql`.
+      - Se elimina el archivo temporal.
+
+4. Capa Silver (Limpieza y Transformación)
+   a. Unificación (Join):
+      - Se leen los tres datasets de la capa Bronze.
+      - Se realiza un cruce (Join) de los datos utilizando el código del cliente como clave primaria, consolidando la información en un único DataFrame maestro.
+   
+   b. Normalización de Texto:
+      - Se eliminan espacios en blanco al inicio y final (Trim).
+      - Se aplica formato de "Título" (primera letra mayúscula) a Nombres, Apellidos y Comunas.
+      - Se convierten a minúsculas campos como Religión, Tipo de Alimentación y Canal de Registro.
+   
+   c. Estandarización de Fechas:
+      - Se convierten las columnas de fecha (nacimiento y registro) de texto a tipo `Date` (yyyy-MM-dd).
+   
+   d. Manejo de Nulos:
+      - Los valores nulos en campos de texto se rellenan con "sin_dato".
+      - Los valores nulos en campos numéricos se rellenan con 0.
+
+5. Carga Final (Salida)
+   - El DataFrame resultante, limpio y consolidado, se escribe en formato Parquet en el directorio `silver/ventas/clientes_consolidado`.
+   - El script finaliza mostrando una muestra de 5 registros y el esquema de los datos procesados para verificación.
