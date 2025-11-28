@@ -4,12 +4,16 @@ Este repositorio contiene la implementación de un proceso **ETL (Extracción, T
 
 ---
 
-## 📊 Diagrama de Flujo
+## 📊 Diagrama Workflow y Arquitectura
 
-El siguiente esquema ilustra la arquitectura del pipeline, desde la configuración del entorno hasta la carga final en la capa Silver.
+Los siguientes esquemas ilustran la arquitectura del pipeline, desde la configuración del entorno hasta la carga final en la capa Silver.
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/95fff1af-71a7-4a2c-8675-2987ca0b5550" alt="Workflow Diagram" width="90%">
+</div>
+
+<div align="center">
+  <img width="3091" height="1763" alt="Untitled diagram-2025-11-28-233736" src="https://github.com/user-attachments/assets/787d5abe-02d1-4613-b34a-0eefe0fd454b" />
 </div>
 
 ---
