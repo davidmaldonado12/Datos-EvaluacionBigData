@@ -1,10 +1,10 @@
 El archivo cubre las siguientes etapas identificadas en el código:
    
-Configuración del Entorno: Ajustes específicos para Java y Hadoop en Windows.
-Extracción: Clonación de datos desde GitHub o uso local.
-Capa Bronze: Ingesta y conversión a Parquet de archivos .csv, .txt y .sql (incluyendo el workaround para SQL).
-Capa Silver: Unificación de datos (Joins), normalización de texto, estandarización de fechas y manejo de nulos.
-Carga: Escritura del resultado consolidado en la carpeta silver.
+1. Configuración del Entorno: Ajustes específicos para Java y Hadoop en Windows.
+2. Extracción: Clonación de datos desde GitHub o uso local.
+3. Capa Bronze: Ingesta y conversión a Parquet de archivos .csv, .txt y .sql (incluyendo el workaround para SQL).
+4. Capa Silver: Unificación de datos (Joins), normalización de texto, estandarización de fechas y manejo de nulos.
+5. Carga: Escritura del resultado consolidado en la carpeta silver.
 
 ===========================================================================
 
