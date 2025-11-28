@@ -1,41 +1,67 @@
-🛒 ETL Pipeline - Lidl Data Project (Team A)
-Este repositorio contiene un flujo de trabajo ETL (Extract, Transform, Load) automatizado, desarrollado en Python utilizando PySpark. El script está optimizado específicamente para ejecutarse en entornos Windows, manejando la ingesta, limpieza y consolidación de datos de ventas y clientes.
+# 🛒 Pipeline ETL - Proyecto Lidl (Equipo A)
 
-🚀 Resumen del Workflow
-El archivo principal etl_lidl_team_a.py orquesta las siguientes etapas:
+Este repositorio contiene la implementación de un proceso **ETL (Extracción, Transformación y Carga)** automatizado en Python utilizando **PySpark**. El script principal, `etl_lidl_team_a.py`, está optimizado específicamente para entornos **Windows**, manejando la ingesta, limpieza y consolidación de datos de clientes.
 
-🛠️ Configuración del Entorno: Ajuste automático de variables de entorno (Java/Hadoop) y mitigación de errores de sockets en Windows.
+---
 
-📥 Extracción: Clonación automática del repositorio de datos o uso de respaldo local.
+## 📊 Diagrama de Flujo
 
-🥉 Capa Bronze (Raw): Ingesta de múltiples formatos (.csv, .txt, .sql) y conversión a Parquet.
+El siguiente esquema ilustra la arquitectura del pipeline, desde la configuración del entorno hasta la carga final en la capa Silver.
 
-🥈 Capa Silver (Curated): Unificación de datasets, normalización de strings, casteo de fechas y manejo de nulos.
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/95fff1af-71a7-4a2c-8675-2987ca0b5550" alt="Workflow Diagram" width="90%">
+</div>
 
-📤 Carga: Escritura del dataset maestro consolidado.
+---
 
-📖 Documentación Técnica Detallada
-1. Configuración del Entorno (Windows Optimization)
-El script prepara el entorno de ejecución para evitar conflictos comunes en Windows:
+## 🛠️ Descripción del Workflow
 
-Configura JAVA_HOME (Java 17) y HADOOP_HOME dinámicamente.
+A continuación se detalla el funcionamiento técnico de cada etapa del script:
 
-Fix Crítico: Establece PYSPARK_PYTHON_WORKER_REUSE=0 para prevenir el error WinError 10038 (común en Python 3.12+ con Spark).
+### 1. Configuración del Entorno (Windows Optimization)
+El script prepara automáticamente el entorno de ejecución para mitigar errores comunes de Hadoop y Spark en Windows:
+* **Variables de Entorno:** Configura dinámicamente `JAVA_HOME` (Java 17) y `HADOOP_HOME`.
+* **Fix de Sockets (WinError 10038):** Establece `PYSPARK_PYTHON_WORKER_REUSE=0`, crucial para evitar fallos de conexión en versiones recientes de Python.
+* **Inicialización:** Crea una `SparkSession` local bajo el nombre "Lidl_ETL_Team_A".
 
-Inicializa una SparkSession local.
+### 2. Extracción de Datos
+El sistema asegura la disponibilidad de los datos fuente mediante una lógica de redundancia:
+1.  Verifica la existencia del directorio `lidl_project_source`.
+2.  Si no existe, intenta clonar el repositorio oficial desde **GitHub**.
+3.  **Fallback:** Si la clonación falla, utiliza los archivos locales como respaldo.
 
-2. Adquisición de Datos
-Verifica la existencia del directorio lidl_project_source.
+### 3. Capa Bronze (Ingesta Raw)
+Se procesan archivos de diversos formatos y se estandarizan a **Parquet** en `bronze/ventas/`.
 
-Si no existe, ejecuta un git clone del repositorio fuente.
+| Archivo Fuente | Formato | Estrategia de Procesamiento |
+| :--- | :--- | :--- |
+| **`clientes_info.csv`** | CSV | Lectura estándar con inferencia de cabeceras. |
+| **`clientes_extra.txt`** | TXT | Lectura sin header + Aplicación de esquema manual (`StructType`). |
+| **`clientes.sql`** | SQL | **Parsing Avanzado:** Extracción de valores `INSERT` vía Regex.<br>**Workaround:** Escritura intermedia a CSV temporal para evitar conflictos de memoria JVM en Windows. |
 
-Fallback: Si falla la red, utiliza los datos locales.
+### 4. Capa Silver (Transformación y Limpieza)
+Generación del dataset maestro consolidado mediante las siguientes reglas de negocio:
 
-3. Capa Bronze: Ingesta y Normalización de Formatos
-Procesamiento de archivos crudos hacia formato Parquet (bronze/ventas/):
-Archivo Fuente,Formato,Estrategia de Procesamiento
-clientes_info.csv,CSV,Lectura estándar con inferencia de headers.
-clientes_extra.txt,TXT,Lectura como CSV sin header + Aplicación de esquema manual (StructType).
-clientes.sql,SQL,Parsing Avanzado: Extracción de valores INSERT INTO mediante Regex.  Workaround: Escritura intermedia a CSV temporal para evitar conflictos de memoria JVM/Python en Windows.
+* 🔗 **Unificación:** Join de los tres datasets usando `codigo_cliente` como llave primaria.
+* 📝 **Normalización de Texto:**
+    * `Trim`: Eliminación de espacios excedentes.
+    * `InitCap`: Formato de Título para *Nombres*, *Apellidos* y *Comunas*.
+    * `Lower`: Minúsculas para *Religión*, *Alimentación* y *Canales*.
+* 📅 **Estandarización Temporal:** Conversión de strings a objetos `Date` (formato `yyyy-MM-dd`).
+* 🚫 **Manejo de Nulos:**
+    * Campos de texto $\rightarrow$ `"sin_dato"`
+    * Campos numéricos $\rightarrow$ `0`
 
-4. Capa Silver: Limpieza y TransformaciónGeneración del dataset maestro en silver/ventas/clientes_consolidado:Unificación (Joins): Cruce de los tres dataframes usando codigo_cliente como llave primaria.Normalización de Texto:Trim: Eliminación de espacios en blanco.InitCap: Formato de título para Nombres, Apellidos y Comunas.Lower: Estandarización a minúsculas para metadatos (Religión, Canales).Casteo de Tipos: Conversión de strings a objetos Date (formato yyyy-MM-dd).Manejo de Nulos:Textos $\rightarrow$ "sin_dato"Numéricos $\rightarrow$ 0📋 Gestión del ProyectoEl desarrollo y seguimiento de tareas de este ETL se gestionó mediante un tablero Kanban en Azure DevOps.💻 Requisitos de EjecuciónPython 3.10+Java 17 (JDK)Binarios de Hadoop (winutils)Librerías: pysparkDesarrollado por Team APor qué esta estructura funciona mejor:Jerarquía Visual: Uso de encabezados (#, ##) para separar claramente las secciones.Uso de Iconos: Los emojis (🛠️, 📥, 🥉) ayudan a identificar rápidamente las etapas del proceso sin tener que leer todo el texto.Tabla para la Capa Bronze: La información sobre los tipos de archivos (csv, txt, sql) se lee mucho mejor en una tabla que en una lista de texto plano.Destacados Técnicos: Se hace énfasis en el "Workaround de Windows" y el "Parsing de SQL", lo cual demuestra que el código es robusto y resuelve problemas complejos.Diagramas Integrados: Las imágenes están colocadas estratégicamente: el diagrama de flujo al principio para entender la lógica, y el Kanban al final para mostrar la metodología de trabajo.
+### 5. Carga Final
+El resultado limpio y unificado se escribe en formato **Parquet** en la ruta:
+> `silver/ventas/clientes_consolidado`
+
+---
+
+## 📋 Gestión del Proyecto
+
+El seguimiento de tareas y evolutivos del desarrollo se realizó mediante un tablero Kanban en Azure DevOps.
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/32e7144f-22e9-402e-9e71-93e0318d8ed2" alt="Azure Kanban Board" width="60%">
+</div>
