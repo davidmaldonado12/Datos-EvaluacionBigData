@@ -1,72 +1,41 @@
-El archivo cubre las siguientes etapas identificadas en el código:
-   
-1. Configuración del Entorno: Ajustes específicos para Java y Hadoop en Windows.
-2. Extracción: Clonación de datos desde GitHub o uso local.
-3. Capa Bronze: Ingesta y conversión a Parquet de archivos .csv, .txt y .sql (incluyendo el workaround para SQL).
-4. Capa Silver: Unificación de datos (Joins), normalización de texto, estandarización de fechas y manejo de nulos.
-5. Carga: Escritura del resultado consolidado en la carpeta silver.
+🛒 ETL Pipeline - Lidl Data Project (Team A)
+Este repositorio contiene un flujo de trabajo ETL (Extract, Transform, Load) automatizado, desarrollado en Python utilizando PySpark. El script está optimizado específicamente para ejecutarse en entornos Windows, manejando la ingesta, limpieza y consolidación de datos de ventas y clientes.
 
-===========================================================================
+🚀 Resumen del Workflow
+El archivo principal etl_lidl_team_a.py orquesta las siguientes etapas:
 
-<img width="1295" height="682" alt="image" src="https://github.com/user-attachments/assets/95fff1af-71a7-4a2c-8675-2987ca0b5550" />
+🛠️ Configuración del Entorno: Ajuste automático de variables de entorno (Java/Hadoop) y mitigación de errores de sockets en Windows.
 
-Descripción del Workflow del Archivo etl_lidl_team_a.py
+📥 Extracción: Clonación automática del repositorio de datos o uso de respaldo local.
 
-Este script de Python implementa un proceso ETL (Extracción, Transformación y Carga) utilizando PySpark, diseñado específicamente para ejecutarse en un entorno Windows. A continuación se describe el flujo de trabajo paso a paso:
+🥉 Capa Bronze (Raw): Ingesta de múltiples formatos (.csv, .txt, .sql) y conversión a Parquet.
 
-1. Configuración del Entorno (Windows)
-   - Configura las variables de entorno para Java 17 (JAVA_HOME) y Hadoop (HADOOP_HOME), esenciales para que PySpark funcione correctamente en Windows.
-   - Establece `PYSPARK_PYTHON_WORKER_REUSE` en "0" para evitar errores de sockets (WinError 10038) comunes en versiones recientes de Python en Windows.
-   - Inicializa una `SparkSession` local llamada "Lidl_ETL_Team_A".
+🥈 Capa Silver (Curated): Unificación de datasets, normalización de strings, casteo de fechas y manejo de nulos.
 
-2. Adquisición de Datos (Extracción)
-   - Verifica la existencia de un repositorio de datos (`lidl_project_source`).
-   - Si no existe, intenta clonar el repositorio desde GitHub (`https://github.com/pconstancioteacher/lidl_project.git`).
-   - Si la clonación falla, utiliza el directorio local actual como fuente de datos de respaldo.
+📤 Carga: Escritura del dataset maestro consolidado.
 
-3. Capa Bronze (Ingesta de Datos Crudos)
-   El script procesa tres tipos de archivos fuente y los convierte a formato Parquet (almacenados en `bronze/ventas/`):
-   
-   a. CSV (`clientes_info.csv`):
-      - Se lee utilizando la opción de cabeceras.
-      - Se guarda directamente en formato Parquet en `bronze/ventas/clientes_info`.
-   
-   b. TXT (`clientes_extra.txt`):
-      - Se lee como un archivo CSV sin cabecera.
-      - Se aplica un esquema manual (`codigo_cliente`, `canal_registro`, `codigo_interno`, `fecha_registro`).
-      - Se guarda en formato Parquet en `bronze/ventas/clientes_extra`.
-   
-   c. SQL (`clientes.sql`):
-      - Se lee el archivo de texto línea por línea.
-      - Se utiliza expresiones regulares (Regex) para extraer los valores dentro de las sentencias `INSERT INTO ... VALUES (...)`.
-      - Workaround Windows: Los datos extraídos se escriben primero en un CSV temporal (`temp_clientes_sql.csv`) para evitar errores de creación de DataFrames en memoria con PySpark en Windows.
-      - Spark lee este CSV temporal y lo guarda finalmente como Parquet en `bronze/ventas/clientes_sql`.
-      - Se elimina el archivo temporal.
+📖 Documentación Técnica Detallada
+1. Configuración del Entorno (Windows Optimization)
+El script prepara el entorno de ejecución para evitar conflictos comunes en Windows:
 
-4. Capa Silver (Limpieza y Transformación)
-   a. Unificación (Join):
-      - Se leen los tres datasets de la capa Bronze.
-      - Se realiza un cruce (Join) de los datos utilizando el código del cliente como clave primaria, consolidando la información en un único DataFrame maestro.
-   
-   b. Normalización de Texto:
-      - Se eliminan espacios en blanco al inicio y final (Trim).
-      - Se aplica formato de "Título" (primera letra mayúscula) a Nombres, Apellidos y Comunas.
-      - Se convierten a minúsculas campos como Religión, Tipo de Alimentación y Canal de Registro.
-   
-   c. Estandarización de Fechas:
-      - Se convierten las columnas de fecha (nacimiento y registro) de texto a tipo `Date` (yyyy-MM-dd).
-   
-   d. Manejo de Nulos:
-      - Los valores nulos en campos de texto se rellenan con "sin_dato".
-      - Los valores nulos en campos numéricos se rellenan con 0.
+Configura JAVA_HOME (Java 17) y HADOOP_HOME dinámicamente.
 
-5. Carga Final (Salida)
-   - El DataFrame resultante, limpio y consolidado, se escribe en formato Parquet en el directorio `silver/ventas/clientes_consolidado`.
-   - El script finaliza mostrando una muestra de 5 registros y el esquema de los datos procesados para verificación.
+Fix Crítico: Establece PYSPARK_PYTHON_WORKER_REUSE=0 para prevenir el error WinError 10038 (común en Python 3.12+ con Spark).
 
-===========================================================================
+Inicializa una SparkSession local.
 
-Kanban Azure -> 
+2. Adquisición de Datos
+Verifica la existencia del directorio lidl_project_source.
 
-<img width="708" height="760" alt="image" src="https://github.com/user-attachments/assets/32e7144f-22e9-402e-9e71-93e0318d8ed2" />
+Si no existe, ejecuta un git clone del repositorio fuente.
 
+Fallback: Si falla la red, utiliza los datos locales.
+
+3. Capa Bronze: Ingesta y Normalización de Formatos
+Procesamiento de archivos crudos hacia formato Parquet (bronze/ventas/):
+Archivo Fuente,Formato,Estrategia de Procesamiento
+clientes_info.csv,CSV,Lectura estándar con inferencia de headers.
+clientes_extra.txt,TXT,Lectura como CSV sin header + Aplicación de esquema manual (StructType).
+clientes.sql,SQL,Parsing Avanzado: Extracción de valores INSERT INTO mediante Regex.  Workaround: Escritura intermedia a CSV temporal para evitar conflictos de memoria JVM/Python en Windows.
+
+4. Capa Silver: Limpieza y TransformaciónGeneración del dataset maestro en silver/ventas/clientes_consolidado:Unificación (Joins): Cruce de los tres dataframes usando codigo_cliente como llave primaria.Normalización de Texto:Trim: Eliminación de espacios en blanco.InitCap: Formato de título para Nombres, Apellidos y Comunas.Lower: Estandarización a minúsculas para metadatos (Religión, Canales).Casteo de Tipos: Conversión de strings a objetos Date (formato yyyy-MM-dd).Manejo de Nulos:Textos $\rightarrow$ "sin_dato"Numéricos $\rightarrow$ 0📋 Gestión del ProyectoEl desarrollo y seguimiento de tareas de este ETL se gestionó mediante un tablero Kanban en Azure DevOps.💻 Requisitos de EjecuciónPython 3.10+Java 17 (JDK)Binarios de Hadoop (winutils)Librerías: pysparkDesarrollado por Team APor qué esta estructura funciona mejor:Jerarquía Visual: Uso de encabezados (#, ##) para separar claramente las secciones.Uso de Iconos: Los emojis (🛠️, 📥, 🥉) ayudan a identificar rápidamente las etapas del proceso sin tener que leer todo el texto.Tabla para la Capa Bronze: La información sobre los tipos de archivos (csv, txt, sql) se lee mucho mejor en una tabla que en una lista de texto plano.Destacados Técnicos: Se hace énfasis en el "Workaround de Windows" y el "Parsing de SQL", lo cual demuestra que el código es robusto y resuelve problemas complejos.Diagramas Integrados: Las imágenes están colocadas estratégicamente: el diagrama de flujo al principio para entender la lógica, y el Kanban al final para mostrar la metodología de trabajo.
